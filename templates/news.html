@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1 class="title">
+  Users photos
+</h1>
+{% for user_image in all_img %}
+    <div class="photo_post">
+    <p>"{{ user_image.owner }}"</p>
+    <img src="{{ user_image.path }}" alt="User Image"-->
+    {% if show %}
+        <a href="{{ url_for('main.show_photo') }}">Unlike</a>
+    {% else %}
+        <a href="{{ url_for('main.profile') }}">Like</a>
+    {% endif %}
+
+    </div>
+{% endfor %}
+
+{% endblock %}

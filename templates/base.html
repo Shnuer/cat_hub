@@ -24,6 +24,12 @@
                         <a href="{{ url_for('main.profile') }}" class="navbar-item">
                             Profile
                         </a>
+                        <a href="{{ url_for('main.show_photo') }}" class="navbar-item">
+                            Photo album
+                        </a>
+                        <a href="{{ url_for('main.show_all_photo') }}" class="navbar-item">
+                            News
+                        </a>
                         {% endif %}
                         {% if not current_user.is_authenticated %}
                         <a href="{{ url_for('auth.login') }}" class="navbar-item">
@@ -33,6 +39,7 @@
                             Sign Up
                         </a>
                         {% endif %}
+
                         {% if current_user.is_authenticated %}
                         <a href="{{ url_for('auth.logout') }}" class="navbar-item">
                             Logout
