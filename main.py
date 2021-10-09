@@ -4,7 +4,7 @@ from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
 import uuid
 import os
-from .models import User, UserPhoto
+from .models import User, UserPhoto, PhotoComment
 from sqlalchemy import desc
 
 
@@ -82,6 +82,51 @@ def show_photo():
 @main.route('/news')
 @login_required
 def show_all_photo():
+
     all_image = UserPhoto.query.order_by(desc(UserPhoto.upload_time)).all()
-    return render_template('news.html', all_img=all_image, show=True)
+    return render_template('news.html', all_img=all_image)
+
+
+@main.route('/like/<int:photo_id>/<action>')
+@login_required
+def like_action(photo_id, action):
+
+    photo = UserPhoto.query.filter_by(photo_id=photo_id).first_or_404()
+
+    if action == 'like':
+        current_user.like_photo(photo)
+        db.session.commit()
+    if action == 'unlike':
+        current_user.unlike_photo(photo)
+        db.session.commit()
+
+    return redirect(request.referrer)
+
+
+@main.route('/comments/<int:photo_id>')
+@login_required
+def show_comments(photo_id):
+    comments = PhotoComment.query.filter_by(photo=photo_id).order_by(desc(PhotoComment.created_date)).all()
+    # comments = 'wow'
+    # photo_id =1
+    print('AHTUUUUUNG', photo_id)
+    photo = UserPhoto.query.filter_by(photo_id=photo_id).first()
+    print(photo.path)
+    return render_template('comments_photo.html', user_image=photo, all_comments=comments)
+
+@main.route('/comments/<int:photo_id>',  methods=['POST'])
+@login_required
+def add_comment(photo_id):
+    print('Im POSSSSSSSSSSSSSSSSSSSSSSSST')
+    user = User.query.filter_by(name=current_user.name).first()
+    photo = UserPhoto.query.filter_by(photo_id=photo_id).first()
+    text = request.form.get('comment')
+    comment = PhotoComment(user=user.id, photo=photo.photo_id, text=str(text))
+    db.session.add(comment)
+    db.session.commit()
+
+    url = fr'/comments/{photo_id}'
+
+    return redirect(url)
+
 

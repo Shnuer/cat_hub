@@ -11,6 +11,7 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
     db.init_app(app)
+
     app.config['ABSOLUTE_UPLOAD_FOLDER'] = os.path.join(app.root_path, 'static', 'hub', 'user')
     app.config['LOCAL_UPLOAD_FOLDER'] = os.path.join('static', 'hub', 'user')
     if not os.path.exists(app.config['ABSOLUTE_UPLOAD_FOLDER']):
@@ -30,6 +31,7 @@ def create_app():
 
     from .main import main as main_blueprint
     app.register_blueprint(main_blueprint)
+    app._static_folder = 'static'
 
     return app
 

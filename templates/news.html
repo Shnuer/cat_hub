@@ -8,11 +8,12 @@
     <div class="photo_post">
     <p>"{{ user_image.owner }}"</p>
     <img src="{{ user_image.path }}" alt="User Image"-->
-    {% if show %}
-        <a href="{{ url_for('main.show_photo') }}">Unlike</a>
+    {% if current_user.has_liked_photo(user_image) %}
+        <a href="{{ url_for('main.like_action', photo_id=user_image.photo_id, action='unlike') }}">Unlike</a>
     {% else %}
-        <a href="{{ url_for('main.profile') }}">Like</a>
+        <a href="{{ url_for('main.like_action', photo_id=user_image.photo_id, action='like') }}">Like</a>
     {% endif %}
+        {{ user_image.likes.count() }} likes
 
     </div>
 {% endfor %}
