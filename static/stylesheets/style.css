@@ -1,0 +1,25 @@
+
+.header{
+    background-color: #25566C;
+    height: 50px;
+    text-align: right;
+    vertical-align: middle;
+    }
+
+.navbar-item{
+    font-family: Arial;
+    text-decoration: none;
+    color: white;
+    display: inline-block;
+    text-align: center;
+    min-width: 10%;
+    line-height: 50px;
+    vertical-align: middle;
+}
+.navbar-item:hover{
+    background-color: green;
+}
+.hero-body{
+    background-color: #111111;
+    }
+

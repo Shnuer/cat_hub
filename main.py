@@ -28,6 +28,19 @@ def check_directory(upload_dir: str, user_name: str) -> str:
     return user_path
 
 
+def save_file(uploaded_file):
+    new_name = generate_new_file_name(uploaded_file.filename)
+
+    absolute_user_directory = check_directory(current_app.config['ABSOLUTE_UPLOAD_FOLDER'], current_user.name)
+    absolute_result_directory = os.path.join(absolute_user_directory, new_name)
+
+    local_user_directory = os.path.join(current_app.config['LOCAL_UPLOAD_FOLDER'], current_user.name)
+    local_result_directory = os.path.join(local_user_directory, new_name)
+
+    uploaded_file.save(absolute_result_directory)
+    return local_result_directory
+
+
 @main.route('/')
 def index() -> str:
     return render_template('index.html')
@@ -51,16 +64,8 @@ def photo_upload():
     uploaded_file = request.files['file']
 
     if uploaded_file.filename != '': # add checking for format like .png .jpeg and another
-        new_name = generate_new_file_name(uploaded_file.filename)
 
-        absolute_user_directory = check_directory(current_app.config['ABSOLUTE_UPLOAD_FOLDER'], current_user.name)
-        absolute_result_directory = os.path.join(absolute_user_directory, new_name)
-
-        local_user_directory = os.path.join(current_app.config['LOCAL_UPLOAD_FOLDER'], current_user.name)
-        local_result_directory = os.path.join(local_user_directory, new_name)
-
-        uploaded_file.save(absolute_result_directory)
-
+        local_result_directory = save_file(uploaded_file)
         user = User.query.filter_by(name=current_user.name).first()
         photo = UserPhoto(owner=user.id, path=local_result_directory)
 
@@ -107,17 +112,14 @@ def like_action(photo_id, action):
 @login_required
 def show_comments(photo_id):
     comments = PhotoComment.query.filter_by(photo=photo_id).order_by(desc(PhotoComment.created_date)).all()
-    # comments = 'wow'
-    # photo_id =1
-    print('AHTUUUUUNG', photo_id)
     photo = UserPhoto.query.filter_by(photo_id=photo_id).first()
-    print(photo.path)
     return render_template('comments_photo.html', user_image=photo, all_comments=comments)
+
 
 @main.route('/comments/<int:photo_id>',  methods=['POST'])
 @login_required
 def add_comment(photo_id):
-    print('Im POSSSSSSSSSSSSSSSSSSSSSSSST')
+
     user = User.query.filter_by(name=current_user.name).first()
     photo = UserPhoto.query.filter_by(photo_id=photo_id).first()
     text = request.form.get('comment')
@@ -128,5 +130,10 @@ def add_comment(photo_id):
     url = fr'/comments/{photo_id}'
 
     return redirect(url)
+
+
+@main.route('/test')
+def test():
+    return render_template('test.html')
 
 
