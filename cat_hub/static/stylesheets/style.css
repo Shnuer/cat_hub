@@ -1,10 +1,10 @@
 
 .header{
-    background-color: #25566C;
+    background-color: #257985;
     height: 50px;
-    text-align: right;
+    /* text-align: left; */
     vertical-align: middle;
-    }
+}
 
 .navbar-item{
     font-family: Arial;
@@ -17,9 +17,54 @@
     vertical-align: middle;
 }
 .navbar-item:hover{
-    background-color: green;
+    background-color: #5EA8A7;
 }
 .hero-body{
     background-color: #111111;
     }
 
+
+
+.title{
+    text-align: center;
+}
+
+.gallery {
+    padding: 15px;
+}
+.gallery-component{
+    width: 500px;
+    margin-left: auto;
+    margin-right: auto; 
+
+}
+
+.owner{
+    font-weight: bolder;
+}
+
+img {
+    max-width:100%;
+}
+
+
+.gallery-footer{
+    margin-bottom: 12%;
+    vertical-align: middle;
+}
+
+a{
+    text-decoration: none; 
+}
+.show-comments { 
+    vertical-align: middle;
+    line-height: 30px;
+} 
+.like { 
+    float: right;
+    display: flex;
+    align-items: center;
+} 
+.like-number{
+    margin-left: 15%;
+}

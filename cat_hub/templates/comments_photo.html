@@ -15,6 +15,7 @@
         <a href="{{ url_for('photo_operation.like_action', photo_id=user_image.id, action='like') }}">Like</a>
     {% endif %}
         {{ user_image.likes.count() }} likes
+        <a href="{{ url_for('photo_operation.delete_photo', photo_id=user_image.id) }}">Delete</a>
     </div>
 
     {% for comment in all_comments %}

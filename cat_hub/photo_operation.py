@@ -5,7 +5,7 @@ from werkzeug.utils import secure_filename
 import uuid
 import os
 from .models import User, UserPhoto, PhotoComment
-from sqlalchemy import desc
+from sqlalchemy import desc, delete
 
 
 def generate_new_file_name(file_name: str) -> str:
@@ -120,6 +120,33 @@ def add_comment(photo_id):
 
     return redirect(url)
 
+@photo_operation.route('/delete/<int:photo_id>')
+@login_required
+def delete_photo(photo_id):
+
+    user = User.query.filter_by(name=current_user.name).first_or_404()
+    photo = UserPhoto.query.filter_by(id=photo_id).first_or_404()
+    if not user.id == photo.owner:
+        return 'You cant remove this photo'
+    else:
+        print('lets_go')
+
+        exists = db.session.query(PhotoComment.comment_id).filter_by(photo=photo_id).first() is not None
+        print('second_step')
+        if exists:
+            sql1 = delete(PhotoComment).where(PhotoComment.photo.in_([photo_id]))
+            db.session.execute(sql1)
+        # comments = PhotoComment.query.filter_by(photo=photo_id).all()
+        print('lets_go')
+
+        db.session.delete(photo)
+        # print(comments)
+        # db.session.delete(comments)
+        db.session.commit()
+
+        # db.session.delete()
+        # UserPhoto.query.filter_by(id=photo_id).delete()
+        return 'You delete your photo'
 
 
 @photo_operation.route('/test')
