@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, current_app
+from flask import Blueprint, render_template, request, redirect, url_for, current_app, flash
 from . import db
 from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
@@ -6,6 +6,32 @@ import uuid
 import os
 from .models import User, UserPhoto, PhotoComment
 from sqlalchemy import desc, delete
+
+
+photo_operation = Blueprint('photo_operation', __name__)
+
+
+def handle_exception(function):
+    def wrapper(*args, **kwargs):
+        try:
+            return function(*args, **kwargs)
+        except Exception as error:
+            return catch_error(error)
+
+    return wrapper
+
+
+def catch_error(error):
+    log_file = current_app.config['LOG_FILE']
+    with open(log_file, 'a+') as f:
+        f.write(str(error))
+    return redirect(url_for('photo_operation.show_error'))
+
+
+def allowed_file(valid_format, file_name):
+    if file_name.rsplit('.', 1)[1] in valid_format:
+        return True
+    return False
 
 
 def generate_new_file_name(file_name: str) -> str:
@@ -27,32 +53,30 @@ def check_directory(upload_dir: str, user_name: str) -> str:
 
 def save_file(uploaded_file):
     new_name = generate_new_file_name(uploaded_file.filename)
+    secure_name = secure_filename(new_name)
 
     absolute_user_directory = check_directory(current_app.config['ABSOLUTE_UPLOAD_FOLDER'], current_user.name)
-    absolute_result_directory = os.path.join(absolute_user_directory, new_name)
+    absolute_result_directory = os.path.join(absolute_user_directory, secure_name)
 
     local_user_directory = os.path.join(current_app.config['LOCAL_UPLOAD_FOLDER'], current_user.name)
-    local_result_directory = os.path.join(local_user_directory, new_name)
+    local_result_directory = os.path.join(local_user_directory, secure_name)
 
     uploaded_file.save(absolute_result_directory)
     return local_result_directory
 
 
-photo_operation = Blueprint('photo_operation', __name__)
+@photo_operation.route('/error')
+def show_error():
+    return render_template('error_page.html')
 
 
-@photo_operation.route('/upload_photo')
-@login_required
-def photo_upload_page():
-    return render_template('photo_upload.html')
-
-
+@handle_exception
 @photo_operation.route('/user_album', methods=['POST'])
 @login_required
 def photo_upload():
     uploaded_file = request.files['file']
 
-    if uploaded_file.filename != '': # add checking for format like .png .jpeg and another
+    if allowed_file(current_app.config['VALID_FORMATS'], secure_filename(uploaded_file.filename)):
 
         local_result_directory = save_file(uploaded_file)
         user = User.query.filter_by(name=current_user.name).first()
@@ -60,10 +84,13 @@ def photo_upload():
 
         db.session.add(photo)
         db.session.commit()
+    else:
+        flash('Not valid file format')
 
     return redirect(url_for('photo_operation.show_photo'))
 
 
+@handle_exception
 @photo_operation.route('/user_album')
 @login_required
 def show_photo():
@@ -73,14 +100,18 @@ def show_photo():
     return render_template('album.html', all_img=all_image)
 
 
+@handle_exception
 @photo_operation.route('/news')
 @login_required
 def show_all_photo():
-
+    comments = PhotoComment.query.order_by(desc(PhotoComment.created_date)).all()
     all_image = UserPhoto.query.order_by(desc(UserPhoto.upload_time)).all()
-    return render_template('news.html', all_img=all_image)
+    all_user = User.query.order_by().all()
+
+    return render_template('news.html', all_img=all_image, all_comments=comments, all_user=all_user)
 
 
+@handle_exception
 @photo_operation.route('/like/<int:photo_id>/<action>')
 @login_required
 def like_action(photo_id, action):
@@ -97,58 +128,41 @@ def like_action(photo_id, action):
     return redirect(request.referrer)
 
 
-@photo_operation.route('/comments/<int:photo_id>')
-@login_required
-def show_comments(photo_id):
-    comments = PhotoComment.query.filter_by(photo=photo_id).order_by(desc(PhotoComment.created_date)).all()
-    photo = UserPhoto.query.filter_by(id=photo_id).first()
-    return render_template('comments_photo.html', user_image=photo, all_comments=comments)
-
-
-@photo_operation.route('/comments/<int:photo_id>',  methods=['POST'])
+@handle_exception
+@photo_operation.route('/add_comment/<int:photo_id>',  methods=['POST'])
 @login_required
 def add_comment(photo_id):
 
-    user = User.query.filter_by(name=current_user.name).first()
-    photo = UserPhoto.query.filter_by(id=photo_id).first()
     text = request.form.get('comment')
-    comment = PhotoComment(user=user.id, photo=photo.id, text=str(text))
-    db.session.add(comment)
-    db.session.commit()
+    if text:
+        user = User.query.filter_by(name=current_user.name).first()
+        photo = UserPhoto.query.filter_by(id=photo_id).first()
+        comment = PhotoComment(user=user.id, photo=photo.id, text=str(text))
+        db.session.add(comment)
+        db.session.commit()
 
-    url = fr'/comments/{photo_id}'
+    return redirect(request.referrer)
 
-    return redirect(url)
 
-@photo_operation.route('/delete/<int:photo_id>')
+@handle_exception
+@photo_operation.route('/delete/<photo_id>', methods=['POST'])
 @login_required
 def delete_photo(photo_id):
 
     user = User.query.filter_by(name=current_user.name).first_or_404()
     photo = UserPhoto.query.filter_by(id=photo_id).first_or_404()
     if not user.id == photo.owner:
-        return 'You cant remove this photo'
+        flash('You cant remove this photo')
+        return redirect(request.referrer)
     else:
-        print('lets_go')
-
         exists = db.session.query(PhotoComment.comment_id).filter_by(photo=photo_id).first() is not None
-        print('second_step')
+
         if exists:
             sql1 = delete(PhotoComment).where(PhotoComment.photo.in_([photo_id]))
             db.session.execute(sql1)
-        # comments = PhotoComment.query.filter_by(photo=photo_id).all()
-        print('lets_go')
 
         db.session.delete(photo)
-        # print(comments)
-        # db.session.delete(comments)
         db.session.commit()
+        flash('You delete your photo')
+        return redirect(request.referrer)
 
-        # db.session.delete()
-        # UserPhoto.query.filter_by(id=photo_id).delete()
-        return 'You delete your photo'
-
-
-@photo_operation.route('/test')
-def test():
-    return render_template('test.html')

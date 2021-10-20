@@ -16,6 +16,4 @@ def profile() -> str:
 
 @main.route('/hello')
 def for_test() -> str:
-    return b'Hello, World!'
-
-
+    return b'Hello!!!!'

@@ -1,5 +1,5 @@
 from flask_login import UserMixin
-# from sqlalchemy.ext.declarative import declarative_base
+
 from sqlalchemy.sql import func
 from . import db
 
@@ -40,17 +40,16 @@ class UserPhoto(db.Model):
     upload_time = db.Column(db.DateTime(timezone=True), default=func.now())
 
     likes = db.relationship('PhotoLike', backref='user_photo', lazy='dynamic')
-    # add original_name
-    # add column with likes
+
 
 
 class PhotoComment(db.Model):
     comment_id = db.Column(db.Integer, primary_key=True)
     user = db.Column(db.Integer, db.ForeignKey('user.id'))
     photo = db.Column(db.Integer, db.ForeignKey('user_photo.id'))
-    text = db.Column(db.String(1000))  # add text column
+    text = db.Column(db.String(1000))  
     created_date = db.Column(db.DateTime(timezone=True), default=func.now())
-    # add datetime column
+
 
 
 class PhotoLike(db.Model):

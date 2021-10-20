@@ -3,8 +3,7 @@ venv
 __pycache__
 .idea
 
-my_config.py
 
 **/hub
 test.html
-
+**/log

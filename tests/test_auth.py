@@ -1,10 +1,7 @@
 import pytest
-from flask import g, session
-# from flask_login import
-from werkzeug.wrappers import response
-from cat_hub import db
 from cat_hub.models import User
-from flask_login import login_required, current_user
+from flask_login import current_user
+
 
 def test_register(client, app):
     assert client.get('/signup').status_code == 200
@@ -26,11 +23,10 @@ def test_register(client, app):
 def test_register_validate_input(client, email, username, password, message):
     response = client.post(
         '/signup',
-        data={'name':username, 'email':email, 'password':password},
+        data={'name': username, 'email': email, 'password': password},
         follow_redirects=True
         )
-        
-    print('AHTUUUUUUUUUUUUUUUUNG', response.data)
+
     assert message in response.data
 
 
@@ -39,8 +35,8 @@ def test_login(client, auth):
     assert client.get('/login').status_code == 200
     
     response = auth.login()
-    assert response.headers['Location'] == 'http://localhost/profile'
 
+    assert response.headers['Location'] == 'http://localhost/profile'
 
     with client:
         client.get('/')
@@ -55,4 +51,3 @@ def test_logout(client, auth):
     with client:
         auth.logout()
         assert current_user.get_id() == None
-
